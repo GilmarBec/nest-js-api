@@ -10,21 +10,21 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Roles } from '../decorators/roles.decorator';
-import { EnumRoles, User } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import { ResponseError } from '../exceptions/response.error';
+import { Public } from '../decorators/public.decorator';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  @Roles(EnumRoles.ADMIN)
   async findAll() {
     const users = await this.usersService.findAll();
     return users.map((user) => ({ ...user, password: undefined } as User));
