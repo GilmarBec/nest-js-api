@@ -6,13 +6,13 @@ import {
   Param,
   Patch,
   Post,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EnumRoles, User } from './entities/user.entity';
-import { ResponseError } from '../exceptions/response.error';
+import { EnumRoles } from './entities/user.entity';
 import { Public } from '../decorators/public.decorator';
 import { Roles } from '../decorators/roles.decorator';
 import { OnlyMyGuard } from '../auth/role/only.my.guard';
@@ -29,31 +29,24 @@ export class UsersController {
 
   @Get()
   @Roles(EnumRoles.ADMIN)
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map((user) => ({ ...user, password: undefined } as User));
+  findAll() {
+    return this.usersService.findAll();
   }
 
   @Get(':id')
   @UseGuards(OnlyMyGuard)
-  async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOneById(id);
-    if (!user) {
-      throw ResponseError.USER_NOT_FOUND;
-    }
-
-    return { ...user, password: undefined } as User;
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOneById(id);
   }
 
   @Patch(':id')
   @UseGuards(OnlyMyGuard)
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const user = this.usersService.update(id, updateUserDto);
-    if (!user) {
-      throw ResponseError.USER_NOT_FOUND;
-    }
-
-    return user;
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Request() req,
+  ) {
+    return this.usersService.update(id, updateUserDto, req.user.role);
   }
 
   @Delete(':id')

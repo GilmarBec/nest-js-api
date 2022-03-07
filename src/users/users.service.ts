@@ -42,7 +42,7 @@ export class UsersService {
     return this.userModel.findOne({ username });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto, currentUserRole) {
     if (updateUserDto.username) {
       const user = await this.findOneByUsername(updateUserDto.username);
 
@@ -51,11 +51,30 @@ export class UsersService {
       }
     }
 
+    const updateUser: Partial<User> = {
+      email: updateUserDto.email,
+      firstName: updateUserDto.firstName,
+      lastName: updateUserDto.lastName,
+      password: updateUserDto.password,
+      username: updateUserDto.username,
+    };
+
+    if (updateUserDto.role && currentUserRole === EnumRoles.ADMIN) {
+      updateUser.role = updateUserDto.role;
+    }
+
     return await this.userModel
-      .findByIdAndUpdate(id, updateUserDto)
+      .findByIdAndUpdate(id, updateUser)
       .then((user) => {
         if (!user) throw ResponseError.USER_NOT_FOUND;
-        return { ...this.cleanSensibleData(user), ...updateUserDto };
+        return {
+          _id: user._id,
+          email: updateUser.email ?? user.email,
+          firstName: updateUser.firstName ?? user.firstName,
+          lastName: updateUser.lastName ?? user.lastName,
+          username: updateUser.username ?? user.username,
+          role: updateUser.role ?? user.role,
+        } as Partial<User>;
       });
   }
 
