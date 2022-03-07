@@ -12,7 +12,7 @@ export class AuthService {
 
   async validateUser(username: string, password: string) {
     const user = await this.userService.findOneByUsername(username);
-    if (user && user.password === password) {
+    if (user && this.userService.verifyPassword(password, user.password)) {
       return this.userService.cleanSensibleData(user);
     }
 

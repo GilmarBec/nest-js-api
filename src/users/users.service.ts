@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { EnumRoles, User } from './entities/user.entity';
 import { Model } from 'mongoose';
 import { ResponseError } from '../exceptions/response.error';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -19,10 +20,11 @@ export class UsersService {
 
     const createdUser = new this.userModel({
       ...createUserDto,
+      password: this.hashPassword(createUserDto.password),
       role: EnumRoles.COMMON,
     });
 
-    return createdUser.save();
+    return createdUser.save().then(this.cleanSensibleData);
   }
 
   async findAll() {
@@ -63,6 +65,10 @@ export class UsersService {
       updateUser.role = updateUserDto.role;
     }
 
+    if (updateUser.password) {
+      updateUser.password = this.hashPassword(updateUserDto.password);
+    }
+
     return await this.userModel
       .findByIdAndUpdate(id, updateUser)
       .then((user) => {
@@ -94,5 +100,13 @@ export class UsersService {
       username: user.username,
       role: user.role,
     };
+  }
+
+  private hashPassword(password: string): string {
+    return bcrypt.hashSync(password, Number(process.env.BCRYPT_SALT_ROUNDS));
+  }
+
+  verifyPassword(password: string, hash: string): boolean {
+    return bcrypt.compareSync(password, hash);
   }
 }
