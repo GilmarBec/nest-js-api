@@ -13,21 +13,14 @@ export class AuthService {
   async validateUser(username: string, password: string) {
     const user = await this.userService.findOneByUsername(username);
     if (user && user.password === password) {
-      return {
-        _id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        role: user.role,
-      } as Partial<User>;
+      return this.userService.cleanSensibleData(user);
     }
 
     return undefined;
   }
 
   async login(user: User) {
-    const payload = { username: user.username, sub: user._id };
+    const payload = { username: user.username, sub: user._id, role: user.role };
 
     return { access_token: this.jwtService.sign(payload) };
   }

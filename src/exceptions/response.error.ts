@@ -5,4 +5,9 @@ export class ResponseError {
     { error: 'User not found', code: 'user-0001' },
     HttpStatus.NOT_FOUND,
   );
+
+  static readonly USERNAME_ALREADY_IN_USE = new HttpException(
+    { error: 'Username already in use', code: 'user-0002' },
+    HttpStatus.NOT_FOUND,
+  );
 }

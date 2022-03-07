@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EnumRoles, User } from './entities/user.entity';
 import { Model } from 'mongoose';
+import { ResponseError } from '../exceptions/response.error';
 
 @Injectable()
 export class UsersService {
@@ -12,6 +13,10 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    if (await this.findOneByUsername(createUserDto.username)) {
+      throw ResponseError.USERNAME_ALREADY_IN_USE;
+    }
+
     const createdUser = new this.userModel({
       ...createUserDto,
       role: EnumRoles.COMMON,
@@ -21,11 +26,16 @@ export class UsersService {
   }
 
   async findAll() {
-    return this.userModel.find();
+    return this.userModel
+      .find()
+      .then((users) => users.map(this.cleanSensibleData));
   }
 
   async findOneById(id: string) {
-    return this.userModel.findById(id);
+    return this.userModel.findById(id).then((user) => {
+      if (!user) throw ResponseError.USER_NOT_FOUND;
+      return this.cleanSensibleData(user);
+    });
   }
 
   async findOneByUsername(username: string) {
@@ -33,10 +43,37 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    return this.userModel.findByIdAndUpdate(id, updateUserDto);
+    if (updateUserDto.username) {
+      const user = await this.findOneByUsername(updateUserDto.username);
+
+      if (user && user._id !== id) {
+        throw ResponseError.USERNAME_ALREADY_IN_USE;
+      }
+    }
+
+    return await this.userModel
+      .findByIdAndUpdate(id, updateUserDto)
+      .then((user) => {
+        if (!user) throw ResponseError.USER_NOT_FOUND;
+        return { ...this.cleanSensibleData(user), ...updateUserDto };
+      });
   }
 
   async remove(id: string) {
-    return this.userModel.findByIdAndRemove(id);
+    return await this.userModel.findByIdAndRemove(id).then((user) => {
+      if (!user) throw ResponseError.USER_NOT_FOUND;
+      return this.cleanSensibleData(user);
+    });
+  }
+
+  cleanSensibleData(user: User): Partial<User> {
+    return {
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      role: user.role,
+    };
   }
 }
