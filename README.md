@@ -14,7 +14,9 @@ $ npm install
 
 ### .env
 ```dotenv
-MONGO_DB_URL='URL_FROM_DB'
+MONGO_DB_URL=URL_FROM_DB
+JWT_SECRET=NOT_SECRET
+JWT_EXPIRATION=3600s
 ```
 
 ## Running the app
