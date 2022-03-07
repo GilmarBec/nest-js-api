@@ -5,10 +5,10 @@ export class User {
   lastName: string;
   password: string;
   username: string;
-  role: Roles;
+  role: EnumRoles;
 }
 
-export enum Roles {
+export enum EnumRoles {
   ADMIN = 'ADMIN',
   COMMON = 'COMMON',
 }

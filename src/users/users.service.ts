@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Roles, User } from './entities/user.entity';
+import { EnumRoles, User } from './entities/user.entity';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const createdUser = new this.userModel({
       ...createUserDto,
-      role: Roles.COMMON,
+      role: EnumRoles.COMMON,
     });
 
     return createdUser.save();
@@ -24,8 +24,12 @@ export class UsersService {
     return this.userModel.find();
   }
 
-  async findOne(id: string) {
+  async findOneById(id: string) {
     return this.userModel.findById(id);
+  }
+
+  async findOneByUsername(username: string) {
+    return this.userModel.findOne({ username });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
